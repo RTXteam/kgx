@@ -1,13 +1,13 @@
-import logging
 import itertools
+import logging
 import uuid
-import click
-
-from .transformer import Transformer
 from typing import Tuple, List, Dict
 
+import click
 from neo4jrestclient.client import GraphDatabase as http_gdb, Node, Relationship
 from neo4jrestclient.query import CypherException
+
+from .transformer import Transformer
 
 
 class NeoTransformer(Transformer):
@@ -18,7 +18,7 @@ class NeoTransformer(Transformer):
     def __init__(self, graph=None, host=None, port=None, username=None, password=None):
         super(NeoTransformer, self).__init__(graph)
         self.http_driver = None
-        http_uri = "{}:{}".format(host, port)
+        http_uri = f'http://{host}:{port}'
         self.http_driver = http_gdb(http_uri, username=username, password=password)
 
     def load(self, start=0, end=None, is_directed=True) -> None:
@@ -382,7 +382,7 @@ class NeoTransformer(Transformer):
         query = f"""
         UNWIND $nodes AS node
         MERGE (n:`{self.DEFAULT_NODE_LABEL}` {{id: node.id}})
-        ON CREATE SET n += node, n:`{category}`
+        ON CREATE SET n += node, n:{category}
         """
 
         return query
@@ -474,7 +474,7 @@ class NeoTransformer(Transformer):
         nodes_by_category = {}
 
         for n in self.graph.nodes():
-            node = self.graph.node[n]
+            node = self.graph.nodes[n]
             if 'id' not in node:
                 logging.warning("Ignoring node as it does not have an 'id' property: {}".format(node))
                 continue
@@ -509,7 +509,7 @@ class NeoTransformer(Transformer):
         """
         categories = {self.DEFAULT_NODE_LABEL}
         for n in self.graph.nodes():
-            node = self.graph.node[n]
+            node = self.graph.nodes[n]
             if 'category' in node:
                 if isinstance(node['category'], list):
                     categories.update(node['category'])
